@@ -105,7 +105,6 @@ export default function Home() {
       const response = await fetch('https://scrap-be.vercel.app/api/scrap-requests', {
         method: 'POST',
         body: formData,
-        // pass token from local storage
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('scrapauthToken')}`,
         },
