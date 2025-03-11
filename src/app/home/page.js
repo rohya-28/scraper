@@ -102,7 +102,7 @@ export default function Home() {
       console.log('Data to send:', formData);
 
 
-      const response = await fetch('http://localhost:8080/api/scrap-requests', {
+      const response = await fetch('https://scrap-be.vercel.app/api/scrap-requests', {
         method: 'POST',
         body: formData,
         // pass token from local storage
