@@ -7,6 +7,9 @@ export default function NearbyScrap() {
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationRequested, setLocationRequested] = useState(false);
+  const [jwtToken, setJwtToken] = useState(
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDAzNGI5OGE1MTdkY2QzM2MxZmIwNSIsInJvbGUiOiJyZXNpZGVudCIsImlhdCI6MTc0MTcxMDg5NCwiZXhwIjoxNzQxNzk3Mjk0fQ.eepjz1Amqrk6QQOKWM_lQm1LRnJuJbbvu4aqMGZ-HEQ'
+  ); // Set the JWT token in state
 
   const requestLocation = () => {
     setLocationRequested(true);
@@ -34,18 +37,39 @@ export default function NearbyScrap() {
   useEffect(() => {
     if (userLocation) {
       const { latitude, longitude } = userLocation;
-      const radius = 500; // Radius in meters
+      const radius = 500;
 
       const fetchNearbyRequests = async () => {
         setLoading(true);
         setError(null);
         try {
-          const response = await fetch(
-            `https://scrap-be.vercel.app/api/scrap-requests/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`
-          );
-          if (!response.ok) {
-            throw new Error('Failed to fetch nearby requests');
+          if (!jwtToken) {
+            setError('Authentication token missing.');
+            setLoading(false);
+            return;
           }
+
+          const response = await fetch(
+            `https://scrap-be.vercel.app/api/scrap-requests/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+            {
+              headers: {
+                Authorization: `Bearer ${jwtToken}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            if (response.status === 401) {
+              setError('Authentication failed. Please log in again.');
+              // In real code, you would clear the jwtToken state.
+              // setJwtToken(null)
+            } else {
+              throw new Error('Failed to fetch nearby requests');
+            }
+            setLoading(false);
+            return;
+          }
+
           const data = await response.json();
           setNearbyRequests(data);
         } catch (err) {
@@ -57,7 +81,7 @@ export default function NearbyScrap() {
 
       fetchNearbyRequests();
     }
-  }, [userLocation]);
+  }, [userLocation, jwtToken]);
 
   if (!locationRequested) {
     return (

@@ -33,7 +33,7 @@ export default function Login() {
 
       if (response.status === 200 && data.success) {
         toast.success('Login successful!');
-        localStorage.setItem('authToken', data.token); // Store the token
+        localStorage.setItem('scrapauthToken', data.token); // Store the token
         router.replace('/home'); // Redirect to home or dashboard
       } else {
         toast.error(data.message || 'Login failed.');
