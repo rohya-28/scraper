@@ -19,7 +19,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'http://localhost:8080/api/auth/login',
+        'https://scrap-be.vercel.app/api/auth/login',
         formData,
         {
           headers: {
@@ -31,19 +31,13 @@ export default function Login() {
       const data = response.data;
       console.log('data', data);
 
-      // if (response.status === 200 && data.success) {
-      //   toast.success('Login successful!');
-      //   localStorage.setItem('authToken', data.token); // Store the token
-      //   router.push('/'); // Redirect to home or dashboard
-      // } else {
-      //   toast.error(data.message || 'Login failed.');
-      // }
+
 
       if (response.status === 200 && data.success) {
         toast.success(data.message || 'Login successful!');
         localStorage.setItem('scrapauthToken', data.token); // Store the token
 
-        router.push('/');
+        router.push('/home');
       } else {
         const errorMessage = data.error || `Error ${response.status}: ${response.statusText}`;
         toast.error(errorMessage);
