@@ -11,6 +11,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation && location === null) {
@@ -41,6 +42,12 @@ export default function Home() {
     }
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -48,17 +55,18 @@ export default function Home() {
     setSuccess(false);
 
     try {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('phone', phone);
+      formData.append('scrapType', scrapType);
+      formData.append('location', JSON.stringify(location));
+      if (image) {
+        formData.append('image', image);
+      }
+
       const response = await fetch('/api/scrap-request', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          phone,
-          scrapType,
-          location,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -68,6 +76,7 @@ export default function Home() {
         setName('');
         setPhone('');
         setScrapType('');
+        setImage(null); // Reset image state
       } else {
         setError(data.message || 'An error occurred.');
       }
@@ -96,7 +105,7 @@ export default function Home() {
               <input
                 type="text"
                 id="name"
-                className="w-full p-2 border rounded text-sm border-green-300 focus:ring focus:ring-green-200"
+                className="w-full p-2 border text-green-600 rounded text-sm border-green-300 focus:ring focus:ring-green-200"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -109,7 +118,7 @@ export default function Home() {
               <input
                 type="tel"
                 id="phone"
-                className="w-full p-2 border rounded text-sm border-green-300 focus:ring focus:ring-green-200"
+                className="w-full p-2 border rounded text-green-600 text-sm border-green-300 focus:ring focus:ring-green-200"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
@@ -149,6 +158,18 @@ export default function Home() {
                 </button>
               </div>
             </div>
+            <div className="mb-2">
+              <label htmlFor="image" className="block text-sm font-medium text-green-700 mb-1">
+                Image
+              </label>
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                className="w-full p-2 border rounded text-green-600 text-sm border-green-300 focus:ring focus:ring-green-200"
+                onChange={handleImageChange}
+              />
+            </div>
             <button
               type="button"
               onClick={getLocation}
@@ -165,7 +186,7 @@ export default function Home() {
             )}
             <button
               type="submit"
-              className={`w-full bg-green-500 text-white p-4 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${
+              className={`w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               disabled={loading}

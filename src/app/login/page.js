@@ -1,41 +1,60 @@
 'use client';
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
+  const router = useRouter();
+
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
+      const response = await axios.post(
+        'https://scrap-be.vercel.app/api/auth/login',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = response.data;
       console.log(data);
-      // Handle the response here
+
+      if (response.status === 200 && data.success) {
+        toast.success('Login successful!');
+        localStorage.setItem('authToken', data.token); // Store the token
+        router.push('/signup'); // Redirect to home or dashboard
+      } else {
+        toast.error(data.message || 'Login failed.');
+      }
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Failed to connect to server.');
     }
   };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
+      <ToastContainer />
       <div className="pt-24">
         <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Login</h1>
@@ -79,4 +98,4 @@ export default function Login() {
       </div>
     </main>
   );
-} 
+}

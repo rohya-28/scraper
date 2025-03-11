@@ -1,20 +1,43 @@
 'use client';
 import { useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user'); // Default role is user
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle signup logic here (e.g., send data to an API)
-    console.log({ name, email, password, role });
+    try {
+      const response = await fetch('https://scrap-be.vercel.app/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Signup successful!');
+        router.push('/login'); // Redirect to login or home
+      } else {
+        toast.error(data.message || 'Signup failed.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to connect to server.');
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50">
+      <ToastContainer />
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-semibold mb-6 text-center text-green-700">Sign Up</h2>
         <form onSubmit={handleSubmit}>
@@ -71,10 +94,10 @@ export default function SignupPage() {
               </button>
               <button
                 type="button"
-                className={`p-2 border rounded ${role === 'admin' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'}`}
-                onClick={() => setRole('admin')}
+                className={`p-2 border rounded ${role === 'collector' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'}`}
+                onClick={() => setRole('collector')}
               >
-                Admin
+                collector
               </button>
             </div>
           </div>
