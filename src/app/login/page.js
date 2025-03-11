@@ -13,13 +13,13 @@ export default function Login() {
   });
   const router = useRouter();
 
-  
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'https://scrap-be.vercel.app/api/auth/login',
+        'http://localhost:8080/api/auth/login',
         formData,
         {
           headers: {
@@ -29,18 +29,28 @@ export default function Login() {
       );
 
       const data = response.data;
-      console.log(data);
+      console.log('data', data);
+
+      // if (response.status === 200 && data.success) {
+      //   toast.success('Login successful!');
+      //   localStorage.setItem('authToken', data.token); // Store the token
+      //   router.push('/'); // Redirect to home or dashboard
+      // } else {
+      //   toast.error(data.message || 'Login failed.');
+      // }
 
       if (response.status === 200 && data.success) {
-        toast.success('Login successful!');
-        localStorage.setItem('authToken', data.token); // Store the token
-        router.push('/signup'); // Redirect to home or dashboard
+        toast.success(data.message || 'Login successful!');
+        localStorage.setItem('scrapauthToken', data.token); // Store the token
+
+        router.push('/');
       } else {
-        toast.error(data.message || 'Login failed.');
+        const errorMessage = data.error || `Error ${response.status}: ${response.statusText}`;
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Failed to connect to server.');
+      toast.error('Invalid credentials. Please try again.');
     }
   };
 
@@ -70,7 +80,8 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-black"
+
               />
             </div>
             <div>
@@ -84,7 +95,7 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-black"
               />
             </div>
             <button
