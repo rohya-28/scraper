@@ -26,7 +26,13 @@ export default function Home() {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests');
+      // const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests',);
+      const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('scrapauthToken')}`,
+        },
+      });
       const data = await res.json();
       console.log('Fetched requests:', data);
       setPreviousRequests(Array.isArray(data) ? data : data.data || []);
@@ -45,9 +51,23 @@ export default function Home() {
           });
         },
         (error) => {
-          setError('Could not get location.');
-          console.error('Geolocation error:', error);
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setError('Location access denied. Please enable location services.');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setError('Location information is unavailable.');
+              break;
+            case error.TIMEOUT:
+              setError('Location request timed out. Try again.');
+              break;
+            default:
+              setError('An unknown error occurred.');
+              break;
+          }
+          console?.error('Geolocation error:', error);
         }
+
       );
     } else {
       setError('Geolocation not supported.');
@@ -67,21 +87,34 @@ export default function Home() {
     setSuccess(false);
 
     try {
+
       const formData = new FormData();
       formData.append('name', name);
       formData.append('phone', phone);
-      formData.append('scrapType', scrapType);
-      formData.append('location', JSON.stringify(location));
-      if (image) {
-        formData.append('image', image);
-      }
+      formData.append('scrapType', 'Paper'); //todo
+      formData.append('latitude', location?.latitude || 28.7041); //todo
+      formData.append('longitude', location?.longitude || 77.1025); //todo
+      formData.append('image', image);
+      formData.append('quantity', 5); //todo
+      formData.append('scrapName', 'Old Newspapers'); //todo
 
-      const response = await fetch('/api/scrap-request', {
+
+      console.log('Data to send:', formData);
+
+
+      const response = await fetch('http://localhost:8080/api/scrap-requests', {
         method: 'POST',
         body: formData,
+        // pass token from local storage
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('scrapauthToken')}`,
+        },
       });
 
       const data = await response.json();
+
+      console.log('data', data);
+
 
       if (data.success) {
         setSuccess(true);
@@ -168,11 +201,10 @@ export default function Home() {
                     key={type}
                     type="button"
                     onClick={() => setScrapType(type)}
-                    className={`p-2 border rounded transition-colors duration-200 ${
-                      scrapType === type
-                        ? 'bg-green-200 border-green-300'
-                        : 'border-green-300 hover:bg-green-100'
-                    }`}
+                    className={`p-2 border rounded transition-colors duration-200 ${scrapType === type
+                      ? 'bg-green-200 border-green-300'
+                      : 'border-green-300 hover:bg-green-100'
+                      }`}
                   >
                     <span className="text-lg text-green-700">{icon}</span>
                   </button>
@@ -207,9 +239,8 @@ export default function Home() {
             )}
             <button
               type="submit"
-              className={`w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Request'}

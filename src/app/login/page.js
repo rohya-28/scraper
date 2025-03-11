@@ -31,8 +31,6 @@ export default function Login() {
       const data = response.data;
       console.log('data', data);
 
-
-
       if (response.status === 200 && data.success) {
         toast.success(data.message || 'Login successful!');
         localStorage.setItem('scrapauthToken', data.token); // Store the token
