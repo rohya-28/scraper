@@ -34,7 +34,7 @@ export default function Login() {
       if (response.status === 200 && data.success) {
         toast.success('Login successful!');
         localStorage.setItem('authToken', data.token); // Store the token
-        router.push('/signup'); // Redirect to home or dashboard
+        router.replace('/home'); // Redirect to home or dashboard
       } else {
         toast.error(data.message || 'Login failed.');
       }
