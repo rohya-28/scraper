@@ -110,7 +110,7 @@ export default function SignupPage() {
                 className={`p-2 border rounded ${role === 'resident' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'}`}
                 onClick={() => setRole('resident')}
               >
-                User
+                Resident
               </button>
               <button
                 type="button"

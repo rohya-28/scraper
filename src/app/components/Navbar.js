@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'; // Import useRouter
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState('');
   const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
@@ -29,7 +30,9 @@ const Navbar = () => {
 
           const data = await response.json();
           localStorage.setItem('userName', data.name);
+          localStorage.setItem('userId', data._id);
           setUserName(data.name);
+          setUserId(data._id);
           setIsLoggedIn(true);
         } catch (error) {
           console.error('Error fetching profile:', error);

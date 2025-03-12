@@ -194,33 +194,7 @@ export default function Home() {
   ) : (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Pending Requests */}
-      {previousRequests.map((req) => (
-        <div
-          key={req._id}
-          className="bg-green-50 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105"
-        >
-          <img
-            src={req.image}
-            alt={req.scrapName}
-            className="w-full h-48 object-cover object-center"
-          />
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-green-800 mb-2">
-              {req.scrapName} ({req.scrapType})
-            </h3>
-            <p className="text-sm text-gray-700 mb-2">
-              <span className="font-medium">Qty:</span> {req.quantity}
-            </p>
-            <p className="text-sm text-gray-700 mb-2 capitalize">
-              <span className="font-medium">Status:</span> {req.status}
-            </p>
-            <p className="text-xs text-gray-600">
-              <span className="font-medium">Created at:</span>{' '}
-              {new Date(req.createdAt).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      ))}
+     
 
       {/* Accepted Requests */}
       {userRequests.map((req) => (

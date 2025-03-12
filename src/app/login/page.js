@@ -36,8 +36,14 @@ export default function Login() {
       if (response.status === 200 && data.success) {
         toast.success(data.message || 'Login successful!');
         localStorage.setItem('scrapauthToken', data.token); // Store the token
+        localStorage.setItem('userRole', data.role); // Store the token
 
-        router.push('/home');
+        if (data.role === 'resident') {
+          router.push('/home');
+        } else {
+          router.push('/pickup');
+        }
+     
       } else {
         const errorMessage = data.error || `Error ${response.status}: ${response.statusText}`;
         toast.error(errorMessage);
