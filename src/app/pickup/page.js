@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
 
 export default function NearbyScrap() {
   const [nearbyRequests, setNearbyRequests] = useState([]);
@@ -10,6 +11,9 @@ export default function NearbyScrap() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationRequested, setLocationRequested] = useState(false);
   const [jwtToken, setJwtToken] = useState(null);
+
+
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('scrapauthToken');
@@ -40,6 +44,16 @@ export default function NearbyScrap() {
       setError('Geolocation is not supported by this browser.');
       setLoading(false);
       toast.error('Geolocation is not supported by this browser.');
+    }
+  };
+
+  const handleDirections = (request, userLocation, router, toast) => {
+    if (userLocation && request.location && request.location.coordinates) {
+      const { latitude: startLat, longitude: startLng } = userLocation;
+      const [endLng, endLat] = request.location.coordinates;
+      router.push(`/directions?startLat=${startLat}&startLng=${startLng}&endLat=${endLat}&endLng=${endLng}`);
+    } else {
+      toast.error("User location or request location is missing.");
     }
   };
 
@@ -239,6 +253,12 @@ export default function NearbyScrap() {
                 >
                   Accept
                 </button>
+                <button
+  onClick={() => handleDirections(request, userLocation, router, toast)}
+  className="bg-blue-500 ml-8 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+>
+  Get Directions
+</button>
               </div>
             </div>
           ))}
