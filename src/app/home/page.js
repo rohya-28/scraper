@@ -14,6 +14,9 @@ export default function Home() {
   const [image, setImage] = useState(null);
   const [previousRequests, setPreviousRequests] = useState([]);
   const [userRequests, setUserRequests] = useState([]);
+  const [scrapName, setScrapName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  
 
   useEffect(() => {
     if (navigator.geolocation && location === null) {
@@ -138,8 +141,8 @@ export default function Home() {
       formData.append('latitude', location?.latitude || 28.7041); //todo
       formData.append('longitude', location?.longitude || 77.1025); //todo
       formData.append('image', image);
-      formData.append('quantity', 5); //todo
-      formData.append('scrapName', 'Old Newspapers'); //todo
+      formData.append('quantity', quantity); //todo
+      formData.append('scrapName', scrapName); //todo
 
 
       console.log('Data to send:', formData);
@@ -279,6 +282,32 @@ export default function Home() {
                 className="w-full p-2 border rounded text-green-600 text-sm border-green-300 focus:ring focus:ring-green-200"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label htmlFor="scrapName" className="block text-sm font-medium text-green-700 mb-1">
+              scrapName
+              </label>
+              <input
+                type="text"
+                id="scrapName"
+                className="w-full p-2 border rounded text-green-600 text-sm border-green-300 focus:ring focus:ring-green-200"
+                value={scrapName}
+                onChange={(e) => setScrapName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label htmlFor="Quantity" className="block text-sm font-medium text-green-700 mb-1">
+              Quantity
+              </label>
+              <input
+                type="text"
+                id="Quantity"
+                className="w-full p-2 border rounded text-green-600 text-sm border-green-300 focus:ring focus:ring-green-200"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
                 required
               />
             </div>

@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function NearbyScrap() {
   const [nearbyRequests, setNearbyRequests] = useState([]);
@@ -31,11 +33,13 @@ export default function NearbyScrap() {
         (err) => {
           setError('Could not get user location.');
           setLoading(false);
+          toast.error('Could not get user location.');
         }
       );
     } else {
       setError('Geolocation is not supported by this browser.');
       setLoading(false);
+      toast.error('Geolocation is not supported by this browser.');
     }
   };
 
@@ -51,6 +55,7 @@ export default function NearbyScrap() {
           if (!jwtToken) {
             setError('Authentication token missing.');
             setLoading(false);
+            toast.error('Authentication token missing.');
             return;
           }
 
@@ -66,8 +71,9 @@ export default function NearbyScrap() {
           if (!response.ok) {
             if (response.status === 401) {
               setError('Authentication failed. Please log in again.');
-              localStorage.removeItem('scrapauthToken'); // Clear token from localStorage
-              setJwtToken(null); // Clear token from state
+              localStorage.removeItem('scrapauthToken');
+              setJwtToken(null);
+              toast.error('Authentication failed. Please log in again.');
             } else {
               throw new Error('Failed to fetch nearby requests');
             }
@@ -78,9 +84,9 @@ export default function NearbyScrap() {
           const data = await response.json();
           setNearbyRequests(data);
           console.log(data);
-          
         } catch (err) {
           setError(err.message);
+          toast.error(err.message);
         } finally {
           setLoading(false);
         }
@@ -89,6 +95,84 @@ export default function NearbyScrap() {
       fetchNearbyRequests();
     }
   }, [userLocation, jwtToken]);
+
+  const handleAccept = async (scrapRequestId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('https://scrap-be.vercel.app/api/pickups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify({
+          scrapRequestId: scrapRequestId,
+          scheduledTime: '',
+          status: 'accepted',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to accept request');
+      }
+
+      toast.success('Request accepted successfully!');
+      // Refresh the list after accepting
+      fetchNearbyRequests();
+    } catch (err) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+
+    const fetchNearbyRequests = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        if (!jwtToken) {
+          setError('Authentication token missing.');
+          setLoading(false);
+          toast.error('Authentication token missing.');
+          return;
+        }
+
+        const response = await fetch(
+          `https://scrap-be.vercel.app/api/scrap-requests/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=500`,
+          {
+            headers: {
+              Authorization: `Bearer ${jwtToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError('Authentication failed. Please log in again.');
+            localStorage.removeItem('scrapauthToken');
+            setJwtToken(null);
+            toast.error('Authentication failed. Please log in again.');
+          } else {
+            throw new Error('Failed to fetch nearby requests');
+          }
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        setNearbyRequests(data);
+        console.log(data);
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNearbyRequests();
+  };
 
   if (!locationRequested) {
     return (
@@ -99,6 +183,7 @@ export default function NearbyScrap() {
         >
           Get Nearby Scrap Requests
         </button>
+        <ToastContainer />
       </div>
     );
   }
@@ -106,7 +191,8 @@ export default function NearbyScrap() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-green-50">
-        <p className="text-green-700">Loading nearby scrap requests...</p>
+        <p className="text-green-700">Loading...</p>
+        <ToastContainer />
       </div>
     );
   }
@@ -115,6 +201,7 @@ export default function NearbyScrap() {
     return (
       <div className="flex justify-center items-center h-screen text-red-600 bg-green-50">
         <p>Error: {error}</p>
+        <ToastContainer />
       </div>
     );
   }
@@ -146,11 +233,18 @@ export default function NearbyScrap() {
                 <p className="text-sm text-gray-700">
                   User: {request.userId.email}
                 </p>
+                <button
+                  onClick={() => handleAccept(request._id)}
+                  className="mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+                >
+                  Accept
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }
