@@ -7,9 +7,14 @@ export default function NearbyScrap() {
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationRequested, setLocationRequested] = useState(false);
-  const [jwtToken, setJwtToken] = useState(
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDAzNGI5OGE1MTdkY2QzM2MxZmIwNSIsInJvbGUiOiJyZXNpZGVudCIsImlhdCI6MTc0MTcxMDg5NCwiZXhwIjoxNzQxNzk3Mjk0fQ.eepjz1Amqrk6QQOKWM_lQm1LRnJuJbbvu4aqMGZ-HEQ'
-  ); // Set the JWT token in state
+  const [jwtToken, setJwtToken] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('scrapauthToken');
+    if (token) {
+      setJwtToken(token);
+    }
+  }, []);
 
   const requestLocation = () => {
     setLocationRequested(true);
@@ -35,7 +40,7 @@ export default function NearbyScrap() {
   };
 
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && jwtToken) {
       const { latitude, longitude } = userLocation;
       const radius = 500;
 
@@ -61,8 +66,8 @@ export default function NearbyScrap() {
           if (!response.ok) {
             if (response.status === 401) {
               setError('Authentication failed. Please log in again.');
-              // In real code, you would clear the jwtToken state.
-              // setJwtToken(null)
+              localStorage.removeItem('scrapauthToken'); // Clear token from localStorage
+              setJwtToken(null); // Clear token from state
             } else {
               throw new Error('Failed to fetch nearby requests');
             }
@@ -72,6 +77,8 @@ export default function NearbyScrap() {
 
           const data = await response.json();
           setNearbyRequests(data);
+          console.log(data);
+          
         } catch (err) {
           setError(err.message);
         } finally {

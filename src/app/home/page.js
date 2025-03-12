@@ -13,6 +13,7 @@ export default function Home() {
   const [success, setSuccess] = useState(false);
   const [image, setImage] = useState(null);
   const [previousRequests, setPreviousRequests] = useState([]);
+  const [userRequests, setUserRequests] = useState([]);
 
   useEffect(() => {
     if (navigator.geolocation && location === null) {
@@ -22,16 +23,64 @@ export default function Home() {
 
   useEffect(() => {
     fetchRequests();
+    fetchUserRequests()
   }, []);
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests');
+      // const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests',);
+      const res = await fetch('https://scrap-be.vercel.app/api/scrap-requests', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('scrapauthToken')}`,
+        },
+      });
       const data = await res.json();
-      console.log('Fetched requests:', data);
-      setPreviousRequests(Array.isArray(data) ? data : data.data || []);
+      if (data.success) {
+        setPreviousRequests(data.scrapRequests);
+      } else {
+        setError(data.message || 'Failed to fetch requests');
+        setPreviousRequests([]);
+      }
+      console.log('Fetched requests:', data.scrapRequests);
+     
     } catch (err) {
       console.error('Failed to fetch previous requests', err);
+      setPreviousRequests([]);
+    }
+  };
+
+  const fetchUserRequests = async () => {
+    try {
+      const token = localStorage.getItem('scrapauthToken');
+      if (!token) {
+        setError('Authentication token missing.');
+        setUserRequests([]); // Clear previous requests
+        return;
+      }
+  
+      const response = await fetch('https://scrap-be.vercel.app/api/scrap-requests/user', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to fetch user requests');
+        setUserRequests([]); // Clear previous requests
+        return;
+      }
+  
+      const data = await response.json();
+      setUserRequests(data);
+      console.log('Fetched user requests:', data);
+  
+    } catch (err) {
+      setError('Failed to fetch user requests');
+      setUserRequests([]); // Clear previous requests
+      console.error('Failed to fetch user requests', err);
     }
   };
 
@@ -45,9 +94,23 @@ export default function Home() {
           });
         },
         (error) => {
-          setError('Could not get location.');
-          console.error('Geolocation error:', error);
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setError('Location access denied. Please enable location services.');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setError('Location information is unavailable.');
+              break;
+            case error.TIMEOUT:
+              setError('Location request timed out. Try again.');
+              break;
+            default:
+              setError('An unknown error occurred.');
+              break;
+          }
+          console?.error('Geolocation error:', error);
         }
+
       );
     } else {
       setError('Geolocation not supported.');
@@ -67,21 +130,33 @@ export default function Home() {
     setSuccess(false);
 
     try {
+
       const formData = new FormData();
       formData.append('name', name);
       formData.append('phone', phone);
-      formData.append('scrapType', scrapType);
-      formData.append('location', JSON.stringify(location));
-      if (image) {
-        formData.append('image', image);
-      }
+      formData.append('scrapType', scrapType); //todo
+      formData.append('latitude', location?.latitude || 28.7041); //todo
+      formData.append('longitude', location?.longitude || 77.1025); //todo
+      formData.append('image', image);
+      formData.append('quantity', 5); //todo
+      formData.append('scrapName', 'Old Newspapers'); //todo
 
-      const response = await fetch('/api/scrap-request', {
+
+      console.log('Data to send:', formData);
+
+
+      const response = await fetch('https://scrap-be.vercel.app/api/scrap-requests', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('scrapauthToken')}`,
+        },
       });
 
       const data = await response.json();
+
+      console.log('data', data);
+
 
       if (data.success) {
         setSuccess(true);
@@ -107,23 +182,74 @@ export default function Home() {
 
       <div className="flex flex-col md:flex-row p-4 gap-6 mt-14">
         {/* Left: Previous Requests */}
-        <div className="md:w-7/10 bg-white p-4 rounded shadow-md border border-green-200 overflow-y-auto max-h-[90vh]">
-          <h2 className="text-xl font-semibold mb-4 text-green-700">Previous Scrap Requests</h2>
-          {previousRequests.length === 0 ? (
-            <p className="text-sm text-gray-500">No previous requests found.</p>
-          ) : (
-            previousRequests.map((req) => (
-              <div key={req._id} className="border p-3 mb-3 rounded bg-green-50">
-                <img src={req.image} alt={req.scrapName} className="w-full h-40 object-cover rounded mb-2" />
-                <p className="text-green-700 font-medium">{req.scrapName} ({req.scrapType})</p>
-                <p className="text-sm text-gray-600">Qty: {req.quantity}</p>
-                <p className="text-sm text-gray-600 capitalize">Status: {req.status}</p>
-                <p className="text-xs text-gray-500">Created at: {new Date(req.createdAt).toLocaleString()}</p>
-              </div>
-            ))
-          )}
+        
+        
+        <div className="md:w-7/10 bg-white p-6 rounded shadow-md border border-green-200 overflow-y-auto max-h-[90vh]">
+  <h2 className="text-2xl font-semibold mb-6 text-green-700 text-center">Previous Scrap Requests</h2>
+  {previousRequests.length === 0 && userRequests.length === 0 ? (
+    <p className="text-lg text-gray-600 text-center">No previous requests found.</p>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Pending Requests */}
+      {previousRequests.map((req) => (
+        <div
+          key={req._id}
+          className="bg-green-50 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105"
+        >
+          <img
+            src={req.image}
+            alt={req.scrapName}
+            className="w-full h-48 object-cover object-center"
+          />
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-green-800 mb-2">
+              {req.scrapName} ({req.scrapType})
+            </h3>
+            <p className="text-sm text-gray-700 mb-2">
+              <span className="font-medium">Qty:</span> {req.quantity}
+            </p>
+            <p className="text-sm text-gray-700 mb-2 capitalize">
+              <span className="font-medium">Status:</span> {req.status}
+            </p>
+            <p className="text-xs text-gray-600">
+              <span className="font-medium">Created at:</span>{' '}
+              {new Date(req.createdAt).toLocaleString()}
+            </p>
+          </div>
         </div>
+      ))}
 
+      {/* Accepted Requests */}
+      {userRequests.map((req) => (
+        <div
+          key={req._id}
+          className="bg-blue-50 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105"
+        >
+          <img
+            src={req.image}
+            alt={req.scrapName}
+            className="w-full h-48 object-cover object-center"
+          />
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-blue-800 mb-2">
+              {req.scrapName} ({req.scrapType})
+            </h3>
+            <p className="text-sm text-gray-700 mb-2">
+              <span className="font-medium">Qty:</span> {req.quantity}
+            </p>
+            <p className="text-sm text-gray-700 mb-2 capitalize">
+              <span className="font-medium">Status:</span> {req.status}
+            </p>
+            <p className="text-xs text-gray-600">
+              <span className="font-medium">Created at:</span>{' '}
+              {new Date(req.createdAt).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
         {/* Right: Form */}
         <div className="md:w-3/10 bg-white p-6 rounded shadow-md border border-green-200">
           <h2 className="text-xl font-semibold mb-4 text-center text-green-700">New Scrap Request</h2>
@@ -168,11 +294,10 @@ export default function Home() {
                     key={type}
                     type="button"
                     onClick={() => setScrapType(type)}
-                    className={`p-2 border rounded transition-colors duration-200 ${
-                      scrapType === type
-                        ? 'bg-green-200 border-green-300'
-                        : 'border-green-300 hover:bg-green-100'
-                    }`}
+                    className={`p-2 border rounded transition-colors duration-200 ${scrapType === type
+                      ? 'bg-green-200 border-green-300'
+                      : 'border-green-300 hover:bg-green-100'
+                      }`}
                   >
                     <span className="text-lg text-green-700">{icon}</span>
                   </button>
@@ -207,9 +332,8 @@ export default function Home() {
             )}
             <button
               type="submit"
-              className={`w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 active:bg-green-700 transition-colors duration-200 text-sm focus:ring focus:ring-green-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Request'}
